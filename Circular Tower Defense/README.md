@@ -21,15 +21,19 @@
 | `systems/particles.ts` `systems/pickups.ts` | 粒子与金币吸附 |
 | `game.ts` | 把上面的系统串成一局 |
 
+工程在仓库里的 `Circular Tower Defense/` 目录，不在 God-X 仓库根目录。
+
 ## 运行
 
 ```bash
+cd "Circular Tower Defense"
 npm install && npm start
 ```
 
 浏览器打开终端里给出的本地地址（默认 http://localhost:5173 ）。手机或窄窗口即是竖屏。无头冒烟测试：
 
 ```bash
+cd "Circular Tower Defense"
 npm run smoke
 ```
 
