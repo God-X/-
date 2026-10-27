@@ -6,6 +6,7 @@ import { derived, shotColor } from '../systems/upgrades'
 import type { Enemy, UpgradeCategory } from '../types'
 import { gameOverLayout, upgradeLayout } from '../ui/layout'
 import { fitCamera } from './camera'
+import { drawCity, drawZombie } from './sprites'
 
 const FONT = '"WenQuanYi Micro Hei", "Droid Sans Fallback", "PingFang SC", sans-serif'
 
@@ -60,46 +61,54 @@ export function draw(ctx: CanvasRenderingContext2D, game: Game, pixelW: number, 
 }
 
 function drawBackdrop(ctx: CanvasRenderingContext2D, game: Game): void {
-  const bg = ctx.createLinearGradient(0, 0, 0, VIEW_H)
-  bg.addColorStop(0, '#12162a')
-  bg.addColorStop(1, '#070814')
+  const bg = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, 30, VIEW_W / 2, VIEW_H / 2, 540)
+  bg.addColorStop(0, '#4a4034')
+  bg.addColorStop(0.42, '#2a2118')
+  bg.addColorStop(1, '#120d0c')
   ctx.fillStyle = bg
   ctx.fillRect(0, 0, VIEW_W, VIEW_H)
 
   ctx.save()
   ctx.translate(VIEW_W / 2, VIEW_H / 2)
-  ctx.strokeStyle = 'rgba(120, 160, 255, 0.08)'
-  ctx.lineWidth = 1
-  for (const radius of [70, CONFIG.ring.radius, 220, 320, 430]) {
+  ctx.strokeStyle = 'rgba(86, 64, 40, 0.16)'
+  ctx.lineWidth = 8
+  ctx.lineCap = 'butt'
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * TAU + 0.2
     ctx.beginPath()
-    ctx.arc(0, 0, radius, 0, TAU)
+    ctx.moveTo(Math.cos(angle) * 78, Math.sin(angle) * 78)
+    ctx.lineTo(Math.cos(angle) * 520, Math.sin(angle) * 520)
     ctx.stroke()
   }
+  ctx.strokeStyle = 'rgba(40, 30, 20, 0.55)'
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.arc(0, 0, CONFIG.ring.radius, 0, TAU)
+  ctx.stroke()
   ctx.restore()
 
-  ctx.strokeStyle = 'rgba(90, 140, 255, 0.045)'
-  ctx.lineWidth = 1
-  for (let x = 0; x <= VIEW_W; x += 40) {
+  ctx.fillStyle = 'rgba(28, 22, 16, 0.7)'
+  for (const [x, y] of [
+    [48, 150],
+    [410, 220],
+    [70, 620],
+    [400, 680],
+    [36, 400],
+    [446, 470],
+  ] as const) {
     ctx.beginPath()
-    ctx.moveTo(x, 0)
-    ctx.lineTo(x, VIEW_H)
-    ctx.stroke()
-  }
-  for (let y = 0; y <= VIEW_H; y += 40) {
-    ctx.beginPath()
-    ctx.moveTo(0, y)
-    ctx.lineTo(VIEW_W, y)
-    ctx.stroke()
+    ctx.ellipse(x, y, 8, 4, 0.5, 0, TAU)
+    ctx.fill()
   }
 
   if (game.bossWave && game.mode === 'playing') {
-    ctx.fillStyle = 'rgba(255, 40, 140, 0.05)'
+    ctx.fillStyle = 'rgba(90, 16, 16, 0.16)'
     ctx.fillRect(0, 0, VIEW_W, VIEW_H)
   }
 
-  const vignette = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, 80, VIEW_W / 2, VIEW_H / 2, 460)
+  const vignette = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, 120, VIEW_W / 2, VIEW_H / 2, 480)
   vignette.addColorStop(0, 'rgba(0,0,0,0)')
-  vignette.addColorStop(1, 'rgba(0,0,0,0.45)')
+  vignette.addColorStop(1, 'rgba(0,0,0,0.55)')
   ctx.fillStyle = vignette
   ctx.fillRect(0, 0, VIEW_W, VIEW_H)
 }
@@ -109,16 +118,8 @@ function drawWorld(ctx: CanvasRenderingContext2D, game: Game): void {
   const count = game.mods.turretCount
   const color = shotColor(game.mods)
 
-  ctx.beginPath()
-  ctx.arc(0, 0, CONFIG.ring.radius, 0, TAU)
-  ctx.strokeStyle = 'rgba(122, 240, 255, 0.35)'
-  ctx.lineWidth = 2
-  ctx.setLineDash([6, 8])
-  ctx.stroke()
-  ctx.setLineDash([])
-
   const chevronR = CONFIG.ring.radius + 18
-  ctx.fillStyle = 'rgba(122, 240, 255, 0.8)'
+  ctx.fillStyle = 'rgba(214, 176, 96, 0.85)'
   for (let i = 0; i < 3; i++) {
     const angle = game.ring.angle + game.ring.direction * (0.35 + i * 0.28)
     const x = Math.cos(angle) * chevronR
@@ -155,28 +156,11 @@ function drawWorld(ctx: CanvasRenderingContext2D, game: Game): void {
       ctx.beginPath()
       ctx.moveTo(place.x, place.y)
       ctx.lineTo(target.x, target.y)
-      ctx.strokeStyle = 'rgba(180, 255, 255, 0.18)'
+      ctx.strokeStyle = 'rgba(180, 60, 48, 0.28)'
       ctx.lineWidth = 1
       ctx.stroke()
     }
-    ctx.strokeStyle = color
-    ctx.lineWidth = 4
-    ctx.lineCap = 'round'
-    ctx.beginPath()
-    ctx.moveTo(place.x, place.y)
-    ctx.lineTo(place.x + Math.cos(aim) * CONFIG.turret.barrel, place.y + Math.sin(aim) * CONFIG.turret.barrel)
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.arc(place.x, place.y, CONFIG.turret.radius, 0, TAU)
-    ctx.fillStyle = '#e7fdff'
-    ctx.fill()
-    ctx.lineWidth = 2
-    ctx.strokeStyle = '#12383d'
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.arc(place.x, place.y, 4, 0, TAU)
-    ctx.fillStyle = color
-    ctx.fill()
+    drawBallista(ctx, place.x, place.y, aim, color)
   }
 
   for (const enemy of game.enemies.active) drawEnemy(ctx, game, enemy)
@@ -244,81 +228,67 @@ function closestForSight(game: Game, x: number, y: number, range: number): Enemy
   return best
 }
 
+function drawBallista(ctx: CanvasRenderingContext2D, x: number, y: number, aim: number, color: string): void {
+  ctx.save()
+  ctx.translate(x, y)
+  ctx.fillStyle = '#4e463c'
+  ctx.fillRect(-7, -7, 14, 14)
+  ctx.strokeStyle = '#2a241c'
+  ctx.lineWidth = 2
+  ctx.strokeRect(-7, -7, 14, 14)
+  ctx.rotate(aim)
+  ctx.strokeStyle = '#6b4328'
+  ctx.lineWidth = 3
+  ctx.beginPath()
+  ctx.moveTo(2, -7)
+  ctx.lineTo(16, 0)
+  ctx.lineTo(2, 7)
+  ctx.stroke()
+  ctx.strokeStyle = '#cbb892'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(2, -6)
+  ctx.lineTo(2, 6)
+  ctx.stroke()
+  ctx.fillStyle = color
+  ctx.fillRect(14, -1.5, 6, 3)
+  ctx.restore()
+}
+
 function drawBase(ctx: CanvasRenderingContext2D, game: Game): void {
   const frac = game.baseMaxHp <= 0 ? 0 : Math.max(0, game.baseHp) / game.baseMaxHp
-  ctx.beginPath()
-  ctx.arc(0, 0, 48, 0, TAU)
-  ctx.strokeStyle = 'rgba(255,255,255,0.12)'
-  ctx.lineWidth = 6
-  ctx.stroke()
-  ctx.beginPath()
-  ctx.arc(0, 0, 48, -Math.PI / 2, -Math.PI / 2 + TAU * frac)
-  ctx.strokeStyle = frac < 0.3 ? '#ff4d6d' : '#7af0ff'
-  ctx.stroke()
-
-  const pulse = frac < 0.3 ? 1 + Math.sin(game.time * 8) * 0.04 : 1
-  ctx.beginPath()
-  ctx.arc(0, 0, CONFIG.base.radius * pulse, 0, TAU)
-  ctx.fillStyle = '#10242c'
-  ctx.fill()
-  ctx.lineWidth = 2
-  ctx.strokeStyle = '#7af0ff'
-  ctx.stroke()
-  ctx.beginPath()
-  ctx.arc(0, 0, 10, 0, TAU)
-  ctx.fillStyle = '#d8fbff'
-  ctx.fill()
-
-  if (game.mode === 'playing') {
-    ctx.font = `bold 13px ${FONT}`
-    ctx.fillStyle = '#d8fbff'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(`${Math.max(0, Math.ceil(game.baseHp))}`, 0, 66)
-  }
+  drawCity(ctx, frac, game.time)
 }
 
 function drawEnemy(ctx: CanvasRenderingContext2D, game: Game, enemy: Enemy): void {
-  ctx.save()
-  ctx.translate(enemy.x, enemy.y)
-  if (enemy.kind === 'flyer') ctx.rotate(Math.PI / 4)
-  if (enemy.kind === 'boss') ctx.rotate(game.time * 0.6)
   const slowed = game.time < enemy.slowUntil
-  ctx.fillStyle = enemy.hitFlash > 0 ? '#ffffff' : slowed ? '#b9f3ff' : enemy.color
-  ctx.fillRect(-enemy.radius, -enemy.radius, enemy.radius * 2, enemy.radius * 2)
-  ctx.strokeStyle = 'rgba(255,255,255,0.7)'
-  ctx.lineWidth = 1.5
-  ctx.strokeRect(-enemy.radius, -enemy.radius, enemy.radius * 2, enemy.radius * 2)
-  if (enemy.kind === 'splitter' || enemy.kind === 'boss') {
-    ctx.strokeStyle = 'rgba(0,0,0,0.35)'
-    ctx.strokeRect(-enemy.radius * 0.45, -enemy.radius * 0.45, enemy.radius * 0.9, enemy.radius * 0.9)
-  }
-  ctx.restore()
+  drawZombie(ctx, enemy, game.time)
 
   if (enemy.kind === 'boss') {
     ctx.font = `bold 11px ${FONT}`
-    ctx.fillStyle = '#ffd0f2'
+    ctx.fillStyle = '#f0d7a2'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'bottom'
-    ctx.fillText('精英', enemy.x, enemy.y - enemy.radius - 10)
+    ctx.fillText('尸王', enemy.x, enemy.y - enemy.radius - 14)
   }
 
   const width = enemy.radius * 2
   const ratio = Math.max(0, enemy.hp / enemy.maxHp)
   if (ratio < 0.999) {
+    const top = enemy.y - enemy.radius - 8
     ctx.fillStyle = 'rgba(0,0,0,0.55)'
-    ctx.fillRect(enemy.x - enemy.radius, enemy.y - enemy.radius - 6, width, 3)
-    ctx.fillStyle = slowed ? '#8fe7ff' : '#d9ffe0'
-    ctx.fillRect(enemy.x - enemy.radius, enemy.y - enemy.radius - 6, width * ratio, 3)
+    ctx.fillRect(enemy.x - enemy.radius, top, width, 3)
+    ctx.fillStyle = slowed ? '#9fd8ee' : '#d7e7a4'
+    ctx.fillRect(enemy.x - enemy.radius, top, width * ratio, 3)
   }
 }
 
 function drawHud(ctx: CanvasRenderingContext2D, game: Game): void {
   ctx.font = `bold 22px ${FONT}`
-  ctx.fillStyle = '#e9fbff'
+  ctx.fillStyle = '#f3e6cf'
   ctx.textAlign = 'left'
   ctx.textBaseline = 'middle'
-  ctx.fillText('环炮防线', 20, 32)
+  ctx.fillText('丧尸攻城', 20, 32)
 
   ctx.font = `14px ${FONT}`
   ctx.fillStyle = game.bossWave ? '#ff8ad8' : '#9eb4d6'
@@ -334,7 +304,7 @@ function drawHud(ctx: CanvasRenderingContext2D, game: Game): void {
   roundRect(ctx, barX, barY, barW, 8, 4)
   ctx.fill()
   const frac = game.baseMaxHp <= 0 ? 0 : Math.max(0, game.baseHp) / game.baseMaxHp
-  ctx.fillStyle = frac < 0.3 ? '#ff4d6d' : '#7af0ff'
+  ctx.fillStyle = frac < 0.3 ? '#e15a4a' : '#e6b15a'
   roundRect(ctx, barX, barY, Math.max(0, barW * frac), 8, 4)
   ctx.fill()
 
@@ -351,7 +321,7 @@ function drawHud(ctx: CanvasRenderingContext2D, game: Game): void {
   ctx.fillStyle = 'rgba(255,255,255,0.08)'
   roundRect(ctx, 20, VIEW_H - 36, 140, 8, 4)
   ctx.fill()
-  ctx.fillStyle = game.ring.spin >= 0 ? '#7af0ff' : '#ffb15e'
+  ctx.fillStyle = game.ring.spin >= 0 ? '#e6b15a' : '#d36a4a'
   roundRect(ctx, 20, VIEW_H - 36, 140 * spinFrac, 8, 4)
   ctx.fill()
   ctx.font = `12px ${FONT}`
@@ -366,10 +336,10 @@ function drawHud(ctx: CanvasRenderingContext2D, game: Game): void {
     ctx.fillStyle = '#e7f7ff'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillText('拖动加速旋转 · 轻点反向', VIEW_W / 2, 236)
+    ctx.fillText('拖动加速旋转 · 轻点反向', VIEW_W / 2, VIEW_H - 96)
     ctx.font = `12px ${FONT}`
-    ctx.fillStyle = '#8ea2c0'
-    ctx.fillText('键盘 A / D 加速，空格反向', VIEW_W / 2, 258)
+    ctx.fillStyle = '#cbb892'
+    ctx.fillText('键盘 A / D 加速，空格反向', VIEW_W / 2, VIEW_H - 76)
     ctx.globalAlpha = 1
   }
 
@@ -460,7 +430,7 @@ function drawGameOver(ctx: CanvasRenderingContext2D, game: Game): void {
   ctx.textBaseline = 'middle'
   ctx.fillStyle = '#ff6b8a'
   ctx.font = `bold 36px ${FONT}`
-  ctx.fillText('基地沦陷', VIEW_W / 2, 250)
+  ctx.fillText('城池陷落', VIEW_W / 2, 250)
   ctx.fillStyle = '#ffffff'
   ctx.font = `bold 22px ${FONT}`
   ctx.fillText(`存活 ${game.stats.wavesCleared} 波`, VIEW_W / 2, 320)

@@ -69,7 +69,7 @@ export function spawnSplitling(
   enemy.speed = 100 * speedScale(wave)
   enemy.radius = 9
   enemy.damage = 5
-  enemy.color = '#ffb0c4'
+  enemy.color = '#b7c48a'
   return enemy
 }
 

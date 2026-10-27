@@ -103,7 +103,7 @@ function detail(id: UpgradeId, mods: RunMods): string {
     case 'spin':
       return mods.spinLevel < 4 ? '最大转速 +50%' : '转速已满，伤害 +10%'
     case 'heal':
-      return `每击杀回复 ${3 * (mods.healLevel + 1)} 点生命`
+      return `每击杀回复 ${3 * (mods.healLevel + 1)} 点城池生命`
     case 'nova':
       return mods.novaLevel <= 0 ? '每 10 秒释放一次全屏冲击' : '冲击更强，间隔缩短'
     case 'gold':

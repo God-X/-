@@ -39,12 +39,12 @@ export interface EnemyArchetype {
 }
 
 export const ENEMIES: Record<EnemyKind, EnemyArchetype> = {
-  grunt: { hp: 18, speed: 64, damage: 8, radius: 13, color: '#ff4d6d' },
-  fast: { hp: 9, speed: 118, damage: 6, radius: 10, color: '#ffe14a' },
-  tank: { hp: 46, speed: 40, damage: 14, radius: 20, color: '#8d7bff' },
-  splitter: { hp: 22, speed: 62, damage: 9, radius: 15, color: '#ff8a3d' },
-  flyer: { hp: 12, speed: 96, damage: 7, radius: 11, color: '#49e7ff' },
-  boss: { hp: 160, speed: 30, damage: 22, radius: 30, color: '#ff3ec8' },
+  grunt: { hp: 18, speed: 64, damage: 8, radius: 13, color: '#7f9a52' },
+  fast: { hp: 9, speed: 118, damage: 6, radius: 10, color: '#9bb86a' },
+  tank: { hp: 46, speed: 40, damage: 14, radius: 20, color: '#5f7a40' },
+  splitter: { hp: 22, speed: 62, damage: 9, radius: 15, color: '#8aa45a' },
+  flyer: { hp: 12, speed: 96, damage: 7, radius: 11, color: '#a3b36e' },
+  boss: { hp: 160, speed: 30, damage: 22, radius: 30, color: '#6d8a48' },
 }
 
 export function hpScale(wave: number): number {
